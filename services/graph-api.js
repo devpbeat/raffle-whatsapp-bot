@@ -47,6 +47,50 @@ module.exports = class GraphApi {
     }
   }
 
+  static async sendText(messageId, senderPhoneNumberId, recipientPhoneNumber, text) {
+    const requestBody = {
+      messaging_product: "whatsapp",
+      to: recipientPhoneNumber,
+      type: "text",
+      text: {
+        body: text
+      }
+    };
+    return this.#makeApiCall(messageId, senderPhoneNumberId, requestBody);
+  }
+
+  static async sendList(messageId, senderPhoneNumberId, recipientPhoneNumber, headerText, bodyText, buttonText, sections) {
+    const requestBody = {
+      messaging_product: "whatsapp",
+      to: recipientPhoneNumber,
+      type: "interactive",
+      interactive: {
+        type: "list",
+        header: {
+          type: "text",
+          text: headerText
+        },
+        body: {
+          text: bodyText
+        },
+        footer: {
+          text: "Select an option"
+        },
+        action: {
+          button: buttonText,
+          sections: sections
+        }
+      }
+    };
+    return this.#makeApiCall(messageId, senderPhoneNumberId, requestBody);
+  }
+
+  static async mediaIdUpload(senderPhoneNumberId, fileUrl, mediaType) {
+    // Basic implementation for uploading media if needed, 
+    // but usually user sends media to us.
+    // We might need to Download media.
+  }
+
   static async messageWithInteractiveReply(messageId, senderPhoneNumberId, recipientPhoneNumber, messageText, replyCTAs) {
     const requestBody = {
       messaging_product: "whatsapp",
