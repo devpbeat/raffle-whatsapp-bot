@@ -1,206 +1,283 @@
 #!/bin/bash
 
-# Copyright 2021-present, Facebook, Inc. All rights reserved.
-
-# This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree.
+# WhatsApp Template Creation Script for Raffle System
+# This script creates message templates for the raffle bot
 
 APPTOKEN="<APP_TOKEN>"
 APPID="<APP_ID>"
 WABAID="<WABA_ID>"
-APIVERSION="<CLOUD_API_VERSION>"
+APIVERSION="v21.0"
 
-echo "Downloading image assets from Meta"
-mkdir public
-curl -o public/groceries.jpg https://scontent.xx.fbcdn.net/mci_ab/uap/asset_manager/id/?ab_b=e\&ab_page=AssetManagerID\&ab_entry=1530053877871776
-curl -o public/salad_bowl.jpg https://scontent.xx.fbcdn.net/mci_ab/uap/asset_manager/id/?ab_b=e\&ab_page=AssetManagerID\&ab_entry=3255815791260974
-curl -o public/sheet_pan_dinner.jpg https://scontent.xx.fbcdn.net/mci_ab/uap/asset_manager/id/?ab_b=e\&ab_page=AssetManagerID\&ab_entry=1389202275965231
-curl -o public/strawberries.jpg https://scontent.xx.fbcdn.net/mci_ab/uap/asset_manager/id/?ab_b=e\&ab_page=AssetManagerID\&ab_entry=1393969325614091
+echo "================================================"
+echo "Creating WhatsApp Templates for Raffle System"
+echo "================================================"
+echo ""
 
-declare -A handles
-for image in "groceries" "salad_bowl" "sheet_pan_dinner" "strawberries"; do
-    echo "Uploading $image"
-
-    file_length=$(stat -f%z "public/$image.jpg")
-
-    response=$(curl -s -X POST "https://graph.facebook.com/${APIVERSION}/${APPID}/uploads?file_name=${image}.jpg&file_length=${file_length}&file_type=image/jpg&access_token=${APPTOKEN}")
-
-    upload_session_id=$(echo "$response" | jq -r '.id')
-    echo "Upload session id: $upload_session_id"
-
-    upload_response=$(curl -s -X POST "https://graph.facebook.com/${APIVERSION}/${upload_session_id}" \
-        --header "Authorization: OAuth ${APPTOKEN}" \
-        --header "file_offset: 0" \
-        --data-binary @"public/${image}.jpg")
-    echo "Upload response: $upload_response"
-    handle=$(echo "$upload_response" | jq -r '.h')
-
-    echo "Handle: $handle"
-
-    handles["$image"]="$handle"
-done
-
-echo "Creating interactive media template"
+# Template 1: Welcome / Menu Template
+echo "1. Creating welcome menu template..."
 curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
   -H "Authorization: Bearer ${APPTOKEN}" \
   -H "Content-Type: application/json" \
   -d '{
-    "name": "grocery_delivery_utility",
-    "language": "en_US",
-    "category": "marketing",
+    "name": "raffle_welcome_menu",
+    "language": "es",
+    "category": "utility",
     "components": [
       {
-        "type": "header",
-        "format": "image",
-        "example": {
-          "header_handle": [
-            "'"${handles["groceries"]}"'"
-          ]
-        }
-      },
-      {
         "type": "body",
-        "text": "Free delivery for all online orders with Jasper’s Market"
-      },
-      {
-        "type": "footer",
-        "text": "developers.facebook.com"
+        "text": "¡Bienvenido a RaffleBot! 🎉\n\n¿Qué te gustaría hacer?"
       },
       {
         "type": "buttons",
         "buttons": [
           {
-            "type": "url",
-            "text": "Get free delivery",
-            "url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/utility-templates/utility-templates"
-          }
-        ]
-      }
-    ]
-  }'
-echo
-
-echo "Creating recipe media carousel template..."
-curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
-  -H "Authorization: Bearer ${APPTOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "recipe_media_carousel",
-    "language": "en_US",
-    "category": "marketing",
-    "components": [
-        {
-            "type": "body",
-            "text": "Our in-house chefs have prepared some delicious and fresh summer recipes."
-        },
-        {
-            "type": "carousel",
-            "cards": [
-                {
-                    "components": [
-                        {
-                            "type": "header",
-                            "format": "image",
-                            "example": {
-                                "header_handle": [
-                                    "'"${handles["sheet_pan_dinner"]}"'"
-                                ]
-                            }
-                        },
-                        {
-                            "type": "body",
-                            "text": "Simple and Healthy Sheet Pan Dinner to Feed the Whole Family"
-                        },
-                        {
-                            "type": "buttons",
-                            "buttons": [
-                                {
-                                    "type": "url",
-                                    "text": "Get this recipe",
-                                    "url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/marketing-templates/media-card-carousel-templates"
-                                }
-                            ]
-                        }
-                    ]
-                },
-                {
-                    "components": [
-                        {
-                            "type": "header",
-                            "format": "image",
-                            "example": {
-                                "header_handle": [
-                                    "'"${handles["salad_bowl"]}"'"
-                                ]
-                            }
-                        },
-                        {
-                            "type": "body",
-                            "text": "3 Plant-Powered Salad Bowls to Fuel Your Week"
-                        },
-                        {
-                            "type": "buttons",
-                            "buttons": [
-                                {
-                                    "type": "url",
-                                    "text": "Get this recipe",
-                                    "url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/marketing-templates/media-card-carousel-templates"
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ]
-}'
-echo
-
-echo "Creating strawberries limited offer template..."
-curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
-  -H "Authorization: Bearer ${APPTOKEN}" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "strawberries_limited_offer",
-    "language": "en_US",
-    "category": "marketing",
-    "components": [
-      {
-        "type": "header",
-        "format": "image",
-        "example": {
-          "header_handle": [
-            "'"${handles["strawberries"]}"'"
-          ]
-        }
-      },
-      {
-        "type": "limited_time_offer",
-        "limited_time_offer": {
-          "text": "Expiring offer!",
-          "has_expiration": true
-        }
-      },
-      {
-        "type": "body",
-        "text": "Fresh strawberries at Jasper'\''s Market are now 20% off! Get them while they last"
-      },
-      {
-        "type": "buttons",
-        "buttons": [
-          {
-            "type": "copy_code",
-            "example": "BERRIES20"
+            "type": "quick_reply",
+            "text": "Ver Rifas 🎫"
           },
           {
-            "type": "url",
-            "text": "Shop now",
-            "url": "https://developers.facebook.com/documentation/business-messaging/whatsapp/templates/marketing-templates/limited-time-offer-templates"
+            "type": "quick_reply",
+            "text": "Mis Pedidos 📋"
+          },
+          {
+            "type": "quick_reply",
+            "text": "Ayuda ❓"
           }
         ]
       }
     ]
   }'
-echo
+echo ""
+echo ""
 
-echo "Finished! Please check for errors if any"
+# Template 2: Order Confirmation
+echo "2. Creating order confirmation template..."
+curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
+  -H "Authorization: Bearer ${APPTOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "raffle_order_confirmed",
+    "language": "es",
+    "category": "utility",
+    "components": [
+      {
+        "type": "body",
+        "text": "✅ *¡Pedido Creado!*\n\nRifa: {{1}}\nNúmeros: {{2}}\nCantidad: {{3}}\nTotal: {{4}} {{5}}\n\n⏰ Reservado por {{6}} minutos\n\n¿Confirmas este pedido?",
+        "example": {
+          "body_text": [
+            [
+              "iPhone 15 Pro",
+              "12, 45, 99",
+              "3",
+              "USD",
+              "150.00",
+              "15"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "buttons",
+        "buttons": [
+          {
+            "type": "quick_reply",
+            "text": "Confirmar ✅"
+          },
+          {
+            "type": "quick_reply",
+            "text": "Cancelar ❌"
+          }
+        ]
+      }
+    ]
+  }'
+echo ""
+echo ""
+
+# Template 3: Payment Confirmed
+echo "3. Creating payment confirmed template..."
+curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
+  -H "Authorization: Bearer ${APPTOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "raffle_payment_confirmed",
+    "language": "es",
+    "category": "utility",
+    "components": [
+      {
+        "type": "body",
+        "text": "🎉 *¡PAGO CONFIRMADO!*\n\n¡Felicidades {{1}}! Tu pago ha sido verificado.\n\n*Rifa:* {{2}}\n*Números:* {{3}}\n*Cantidad:* {{4}} boleto(s)\n*Total Pagado:* {{5}} {{6}}\n\nTus números están confirmados para el sorteo.\n\n¡Mucha suerte! 🍀",
+        "example": {
+          "body_text": [
+            [
+              "Juan Pérez",
+              "iPhone 15 Pro",
+              "12, 45, 99",
+              "3",
+              "USD",
+              "150.00"
+            ]
+          ]
+        }
+      }
+    ]
+  }'
+echo ""
+echo ""
+
+# Template 4: Payment Instructions
+echo "4. Creating payment instructions template..."
+curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
+  -H "Authorization: Bearer ${APPTOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "raffle_payment_instructions",
+    "language": "es",
+    "category": "utility",
+    "components": [
+      {
+        "type": "body",
+        "text": "💳 *Instrucciones de Pago*\n\nMonto: {{1}} {{2}}\n\nPor favor realiza el pago y envía una captura de pantalla o foto del comprobante de pago.\n\n¡Una vez verificado, tus números serán confirmados!\n\nPedido #{{3}}",
+        "example": {
+          "body_text": [
+            [
+              "USD",
+              "150.00",
+              "12345"
+            ]
+          ]
+        }
+      }
+    ]
+  }'
+echo ""
+echo ""
+
+# Template 5: New Raffle Announcement
+echo "5. Creating new raffle announcement template..."
+curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
+  -H "Authorization: Bearer ${APPTOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "raffle_new_announcement",
+    "language": "es",
+    "category": "marketing",
+    "components": [
+      {
+        "type": "header",
+        "format": "image",
+        "example": {
+          "header_handle": [
+            "YOUR_IMAGE_HANDLE_HERE"
+          ]
+        }
+      },
+      {
+        "type": "body",
+        "text": "🎉 *¡NUEVA RIFA!*\n\n{{1}}\n\n�� Precio: {{2}} {{3}} por número\n🎫 Números disponibles: {{4}}\n\n¡No te la pierdas!",
+        "example": {
+          "body_text": [
+            [
+              "iPhone 15 Pro Max - Color Negro 256GB",
+              "USD",
+              "50.00",
+              "100"
+            ]
+          ]
+        }
+      },
+      {
+        "type": "buttons",
+        "buttons": [
+          {
+            "type": "quick_reply",
+            "text": "Ver Detalles ��"
+          },
+          {
+            "type": "quick_reply",
+            "text": "Participar Ahora 🎫"
+          }
+        ]
+      }
+    ]
+  }'
+echo ""
+echo ""
+
+# Template 6: Order Reminder (Time expiring)
+echo "6. Creating order reminder template..."
+curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
+  -H "Authorization: Bearer ${APPTOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "raffle_order_reminder",
+    "language": "es",
+    "category": "utility",
+    "components": [
+      {
+        "type": "body",
+        "text": "⏰ *Recordatorio de Pedido*\n\nTu reserva de números expirará pronto:\n\nPedido #{{1}}\nRifa: {{2}}\nNúmeros: {{3}}\nTotal: {{4}} {{5}}\n\nTiempo restante: {{6}} minutos\n\nPor favor completa tu pago para confirmar tus números.",
+        "example": {
+          "body_text": [
+            [
+              "12345",
+              "iPhone 15 Pro",
+              "12, 45, 99",
+              "USD",
+              "150.00",
+              "5"
+            ]
+          ]
+        }
+      }
+    ]
+  }'
+echo ""
+echo ""
+
+# Template 7: Winner Announcement
+echo "7. Creating winner announcement template..."
+curl -X POST "https://graph.facebook.com/${APIVERSION}/${WABAID}/message_templates" \
+  -H "Authorization: Bearer ${APPTOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "raffle_winner_announcement",
+    "language": "es",
+    "category": "utility",
+    "components": [
+      {
+        "type": "header",
+        "format": "image",
+        "example": {
+          "header_handle": [
+            "YOUR_WINNER_IMAGE_HANDLE_HERE"
+          ]
+        }
+      },
+      {
+        "type": "body",
+        "text": "🎊 *¡FELICIDADES {{1}}!* 🎊\n\n¡GANASTE LA RIFA!\n\n*Rifa:* {{2}}\n*Número Ganador:* {{3}}\n\nNos pondremos en contacto contigo para coordinar la entrega de tu premio.\n\n¡Disfruta tu premio! 🎁",
+        "example": {
+          "body_text": [
+            [
+              "Juan Pérez",
+              "iPhone 15 Pro",
+              "45"
+            ]
+          ]
+        }
+      }
+    ]
+  }'
+echo ""
+echo ""
+
+echo "================================================"
+echo "✅ Finished creating templates!"
+echo "================================================"
+echo ""
+echo "Notes:"
+echo "- Replace <APP_TOKEN>, <APP_ID>, <WABA_ID> with your actual values"
+echo "- For templates with images, upload images first and replace handle placeholders"
+echo "- Templates need Meta approval before use (typically 24-48 hours)"
+echo "- Check Meta Business Manager for approval status"
+echo ""
