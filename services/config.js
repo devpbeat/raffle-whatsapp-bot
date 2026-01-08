@@ -25,6 +25,9 @@ module.exports = Object.freeze({
   accessToken: process.env.ACCESS_TOKEN,
   verifyToken: process.env.VERIFY_TOKEN,
 
+  // Backoffice configuration
+  backofficeUrl: process.env.BACKOFFICE_URL || "http://localhost:8000",
+
   // Server configuration
   port: process.env.PORT || 8080,
   redisHost: process.env.REDIS_HOST || "localhost",

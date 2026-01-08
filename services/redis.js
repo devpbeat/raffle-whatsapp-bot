@@ -37,6 +37,25 @@ module.exports = class Cache {
         await client.expire(key, 15);
     }
 
+    static async set(key, value, ttl = 3600) {
+        await client.set(key, JSON.stringify(value));
+        if (ttl) {
+            await client.expire(key, ttl);
+        }
+    }
+
+    static async get(key) {
+        const val = await client.get(key);
+        if (val) {
+            try {
+                return JSON.parse(val);
+            } catch (e) {
+                return val;
+            }
+        }
+        return null;
+    }
+
     static async remove(key) {
         let resp = await client.del(key);
 
